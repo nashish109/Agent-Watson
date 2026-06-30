@@ -1,4 +1,4 @@
-<![CDATA[# Agent Watson
+# Agent Watson
 
 > **Become better every single day.**
 
@@ -6,13 +6,17 @@ Agent Watson is a personal AI platform designed to be your learning, career, and
 
 This is not a notes app. This is not a chatbot. This is not a productivity tool. It is a lifelong learning companion that grows with you.
 
+---
+
 ## Vision
 
 Help every individual become better every single day by learning from their work, studies, projects, goals, and knowledge.
 
+---
+
 ## Architecture
 
-```
+```text
 agent-watson/
 ├── apps/              # User-facing applications
 │   ├── web/           # Next.js web application
@@ -31,25 +35,37 @@ agent-watson/
 └── tools/             # Build and development tooling
 ```
 
+---
+
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Monorepo | pnpm workspaces + Turborepo |
+|--------|------------|
+| Monorepo | pnpm Workspaces + Turborepo |
 | Frontend | Next.js, React, TypeScript |
 | Backend | Python (FastAPI), Node.js |
 | Database | PostgreSQL (pgvector) |
-| Search | PostgreSQL FTS + Vector embeddings |
-| AI/ML | LangChain, OpenAI / Anthropic |
-| CLI | Rust (future) |
+| Search | PostgreSQL Full-Text Search + Vector Embeddings |
+| AI / ML | LangChain, OpenAI / Anthropic |
+| CLI | Rust *(future)* |
+
+---
 
 ## Getting Started
 
 ```bash
-# Prerequisites: Node.js >= 20, pnpm >= 9
+# Prerequisites
+Node.js >= 20
+pnpm >= 9
+
+# Install dependencies
 pnpm install
+
+# Start development
 pnpm dev
 ```
+
+---
 
 ## Principles
 
@@ -61,7 +77,8 @@ pnpm dev
 6. **Human-in-the-loop** — AI assists, humans decide.
 7. **Contextual awareness** — Know what you're doing and why.
 
+---
+
 ## License
 
-MIT — see [LICENSE](./LICENSE).
-]]>
+Licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
