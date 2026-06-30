@@ -9,7 +9,7 @@ import { ContributionInput } from "@/components/contribution-input"
 import { useSession } from "@/hooks/use-session"
 
 export default function HomePage() {
-  const { session, contribute, createMemory, reflect } = useSession()
+  const { session, contribute } = useSession()
   const [showInput, setShowInput] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -28,36 +28,46 @@ export default function HomePage() {
   }, [showInput])
 
   const handleContribute = useCallback(
-    (content: string) => {
-      contribute(content)
+    async (content: string) => {
       setShowInput(false)
       setIsProcessing(true)
       scrollToBottom()
 
-      setTimeout(() => {
-        createMemory(content)
-        scrollToBottom()
-      }, 800)
+      try {
+        await contribute(content)
+      } catch (err) {
+        console.error("Contribution failed:", err)
+      }
 
-      setTimeout(() => {
-        reflect()
-        setIsProcessing(false)
-        scrollToBottom()
-      }, 1800 + Math.random() * 600)
+      setIsProcessing(false)
+      scrollToBottom()
     },
-    [contribute, createMemory, reflect, scrollToBottom],
+    [contribute, scrollToBottom],
   )
 
   const handleCancel = useCallback(() => {
     setShowInput(false)
   }, [])
 
+  const items = session?.items ?? []
+
   return (
     <MainLayout>
       <LivingCanvas ref={canvasRef} onActivate={handleActivate}>
-        <SessionHeader session={session} />
+        {session ? (
+          <SessionHeader
+            title={session.title}
+            date={session.date}
+          />
+        ) : (
+          <div className="animate-fade-in-up">
+            <p className="text-xl font-medium tracking-tight sm:text-2xl">
+              Today&apos;s Session
+            </p>
+          </div>
+        )}
 
-        {session.memories.length === 0 && !showInput && (
+        {items.length === 0 && !showInput && (
           <div
             className="mt-24 cursor-pointer text-center animate-fade-in"
             onClick={handleActivate}
@@ -69,24 +79,9 @@ export default function HomePage() {
         )}
 
         <div className="mt-10 flex flex-col gap-4">
-          {session.memories.map((memory) => {
-            if (memory.type === "memory-created") {
-              return (
-                <div
-                  key={memory.id}
-                  className="animate-fade-in pl-1"
-                >
-                  <p className="text-[11px] font-medium text-primary/60">
-                    Learning: {memory.topic}
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground/20">
-                    Memory recorded
-                  </p>
-                </div>
-              )
-            }
-            return <MemoryCard key={memory.id} memory={memory} />
-          })}
+          {items.map((item) => (
+            <MemoryCard key={item.id} item={item} />
+          ))}
         </div>
 
         {isProcessing && (

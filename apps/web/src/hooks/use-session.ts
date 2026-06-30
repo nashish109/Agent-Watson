@@ -1,77 +1,164 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
-import {
-  type Memory,
-  type Session,
-  createNewSession,
-  getReflection,
-  getMemoryLabel,
-  extractTopic,
+import type {
+  Session,
+  TimelineItem,
+  BridgeSession,
+  BridgeContribution,
+  BridgeMemory,
+  BridgeReflection,
+  BridgeRelationship,
 } from "@/data/memories"
+import { buildSessionTitle } from "@/data/memories"
 
-let memoryCounter = 0
+// ---------------------------------------------------------------------------
+// Types for the API
+// ---------------------------------------------------------------------------
+
+interface BridgeResponse {
+  ok: boolean
+  error?: string
+  intent?: string
+  intent_confidence?: number
+  response?: string | null
+  session?: BridgeSession
+  contribution?: BridgeContribution
+  memories?: BridgeMemory[]
+  reflections?: BridgeReflection[]
+  relationships?: BridgeRelationship[]
+  summary?: string
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
 
 export function useSession() {
-  const [session, setSession] = useState<Session>(() => createNewSession())
+  const [session, setSession] = useState<Session | null>(null)
+  const sessionIdRef = useRef<string | null>(null)
 
-  const addMemory = useCallback(
-    (memory: Memory) => {
-      setSession((prev) => ({
-        ...prev,
-        memories: [...prev.memories, memory],
-      }))
-    },
-    [],
-  )
+  const ensureSession = useCallback(async (): Promise<string> => {
+    if (sessionIdRef.current) return sessionIdRef.current
+
+    const res = await fetch("/api/memory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cmd: "create_session" }),
+    })
+
+    const data: BridgeResponse = await res.json()
+    if (!data.ok || !data.session) {
+      throw new Error(data.error ?? "Failed to create session")
+    }
+
+    sessionIdRef.current = data.session.id
+
+    setSession({
+      id: data.session.id,
+      title: buildSessionTitle(new Date(data.session.session_date)),
+      date: new Date(data.session.session_date),
+      items: [],
+      summary: null,
+    })
+
+    return data.session.id
+  }, [])
 
   const contribute = useCallback(
-    (content: string): Memory => {
-      const memory: Memory = {
-        id: `mem-${Date.now()}-${memoryCounter++}`,
+    async (text: string): Promise<TimelineItem[]> => {
+      const sessionId = await ensureSession()
+
+      const res = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cmd: "contribute", session_id: sessionId, text }),
+      })
+
+      const data: BridgeResponse = await res.json()
+      if (!data.ok) {
+        throw new Error(data.error ?? "Contribution failed")
+      }
+
+      const contributionId = data.contribution!.id
+      const items: TimelineItem[] = []
+
+      // 1. Contribution
+      items.push({
+        id: contributionId,
         type: "contribution",
-        content,
-        createdAt: new Date(),
-        sessionId: session.id,
+        content: data.contribution!.text,
+        createdAt: new Date(data.contribution!.timestamp),
+      })
+
+      // 2. Conversational response (for Question intents and similar)
+      if (data.response) {
+        items.push({
+          id: `response-${contributionId}`,
+          type: "response",
+          content: data.response,
+          createdAt: new Date(),
+        })
       }
-      addMemory(memory)
-      return memory
+
+      // Bridge returns memories/reflections either as arrays or (in the session
+      // object) as properly serialised JSON. Use the session data when the
+      // top-level fields are not usable arrays.
+      const sessionMemories = data.session?.memories ?? []
+      const sessionReflections = data.session?.reflections ?? []
+
+      const isStr = (v: unknown): v is string => typeof v === "string"
+
+      const memories: BridgeMemory[] = isStr(data.memories)
+        ? sessionMemories.filter((m: BridgeMemory) => m.contribution_id === contributionId)
+        : (data.memories ?? sessionMemories)
+
+      const reflections: BridgeReflection[] = isStr(data.reflections)
+        ? sessionReflections.filter((r: BridgeReflection) =>
+            memories.some((m) => m.id === r.memory_id),
+          )
+        : (data.reflections ?? sessionReflections)
+
+      // 3. Memories
+      for (const m of memories) {
+        items.push({
+          id: m.id,
+          type: "memory",
+          content: m.summary,
+          topic: m.topic,
+          memoryType: m.display_label ?? m.type,
+          displayLabel: m.display_label,
+          createdAt: new Date(m.created_at),
+        })
+      }
+
+      // 4. Reflections
+      for (const r of reflections) {
+        items.push({
+          id: r.id,
+          type: "reflection",
+          content: r.text,
+          relatedTo: r.related_to?.length ? r.related_to : undefined,
+          createdAt: new Date(r.created_at),
+        })
+      }
+
+      setSession((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          items: [...prev.items, ...items],
+        }
+      })
+
+      return items
     },
-    [session.id, addMemory],
+    [ensureSession],
   )
 
-  const createMemory = useCallback(
-    (content: string): Memory => {
-      const topic = extractTopic(content)
-      const memory: Memory = {
-        id: `mem-${Date.now()}-${memoryCounter++}`,
-        type: "memory-created",
-        content: topic,
-        createdAt: new Date(),
-        sessionId: session.id,
-        topic,
-      }
-      addMemory(memory)
-      return memory
-    },
-    [session.id, addMemory],
-  )
+  const getSession = useCallback((): Session | null => {
+    return session
+  }, [session])
 
-  const reflect = useCallback(
-    (): Memory => {
-      const memory: Memory = {
-        id: `mem-${Date.now()}-${memoryCounter++}`,
-        type: "reflection",
-        content: getReflection(),
-        createdAt: new Date(),
-        sessionId: session.id,
-        memoryLabel: getMemoryLabel(),
-      }
-      addMemory(memory)
-      return memory
-    },
-    [session.id, addMemory],
-  )
-
-  return { session, contribute, createMemory, reflect }
+  return { session, contribute, getSession }
 }

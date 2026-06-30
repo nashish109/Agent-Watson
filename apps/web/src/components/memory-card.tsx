@@ -1,23 +1,27 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import type { Memory } from "@/data/memories"
+import type { TimelineItem } from "@/data/memories"
 
 interface MemoryCardProps {
-  memory: Memory
+  item: TimelineItem
 }
 
-export function MemoryCard({ memory }: MemoryCardProps) {
+export function MemoryCard({ item }: MemoryCardProps) {
   return (
     <div
       className={cn(
         "animate-fade-in rounded-xl border px-5 py-4 text-sm leading-relaxed transition-colors",
-        memory.type === "contribution"
+        item.type === "contribution"
           ? "border-border/40 bg-card text-foreground"
-          : "border-primary/10 bg-card/60 text-foreground/85",
+          : item.type === "reflection"
+            ? "border-primary/10 bg-card/60 text-foreground/85"
+            : item.type === "response"
+              ? "border-primary/20 bg-primary/5 text-foreground"
+              : "border-border/30 bg-card/50 text-foreground/90",
       )}
     >
-      {memory.type === "contribution" && (
+      {item.type === "contribution" && (
         <div className="mb-2 flex items-center gap-2">
           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
             Contribution
@@ -25,7 +29,16 @@ export function MemoryCard({ memory }: MemoryCardProps) {
         </div>
       )}
 
-      {memory.type === "reflection" && (
+      {item.type === "memory" && (
+        <div className="mb-2 flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400/50" />
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-amber-400/60">
+            {item.displayLabel ?? item.memoryType ?? "Memory"}
+          </span>
+        </div>
+      )}
+
+      {item.type === "reflection" && (
         <div className="mb-2 flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-primary/40" />
           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-primary/60">
@@ -34,26 +47,49 @@ export function MemoryCard({ memory }: MemoryCardProps) {
         </div>
       )}
 
-      <p>{memory.content}</p>
+      {item.type === "response" && (
+        <div className="mb-2 flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-primary/80">
+            Watson
+          </span>
+        </div>
+      )}
 
-      {memory.type === "reflection" && memory.memoryLabel && (
-        <p className="mt-2 text-[11px] italic text-primary/40">
-          {memory.memoryLabel}
+      <p>{item.content}</p>
+
+      {item.type === "reflection" && item.relatedTo && item.relatedTo.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            Connected To
+          </span>
+          {item.relatedTo.map((label) => (
+            <span
+              key={label}
+              className="rounded-full border border-primary/10 bg-primary/5 px-2 py-0.5 text-[11px] text-primary/70"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {item.type === "memory" && item.topic && (
+        <p className="mt-2 text-[11px] italic text-amber-400/40">
+          Topic: {item.topic}
         </p>
       )}
 
-      {memory.type !== "memory-created" && (
-        <p
-          className={cn(
-            "mt-1.5 text-[10px]",
-            memory.type === "contribution"
-              ? "text-muted-foreground/20"
-              : "text-muted-foreground/15",
-          )}
-        >
-          {formatTime(memory.createdAt)}
-        </p>
-      )}
+      <p
+        className={cn(
+          "mt-1.5 text-[10px]",
+          item.type === "contribution"
+            ? "text-muted-foreground/20"
+            : "text-muted-foreground/15",
+        )}
+      >
+        {formatTime(item.createdAt)}
+      </p>
     </div>
   )
 }
