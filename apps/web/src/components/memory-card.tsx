@@ -74,6 +74,38 @@ export function MemoryCard({ item }: MemoryCardProps) {
         </div>
       )}
 
+      {item.type === "reflection" && item.concepts && item.concepts.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            Concepts
+          </span>
+          {item.concepts.map((name) => (
+            <span
+              key={name}
+              className="rounded-full border border-indigo-500/10 bg-indigo-500/5 px-2 py-0.5 text-[11px] text-indigo-400/80"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {item.type === "reflection" && item.connections && item.connections.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            Connections
+          </span>
+          {item.connections.map((conn) => (
+            <span
+              key={conn}
+              className="text-[11px] text-muted-foreground/60"
+            >
+              {conn}
+            </span>
+          ))}
+        </div>
+      )}
+
       {item.type === "memory" && item.topic && (
         <p className="mt-2 text-[11px] italic text-amber-400/40">
           Topic: {item.topic}

@@ -23,6 +23,9 @@ Commands:
 
   {"cmd": "get_summary", "session_id": "..."}
     → {"ok": true, "summary": "..."}
+
+  {"cmd": "query", "text": "python"}
+    → {"ok": true, "query": "python", "total_count": N, "items": [...]}
 """
 
 import json
@@ -30,8 +33,14 @@ import sys
 from datetime import datetime, timezone
 
 from memory.session import SessionService
+from reflection import SessionReflectionService
 
 _service = SessionService()
+_reflection_service = SessionReflectionService(
+    session_service=_service,
+    concept_graph=_service.concept_graph,
+    retrieval_service=_service.retrieval_service,
+)
 
 
 def _serialise(obj: object) -> object:
@@ -67,6 +76,8 @@ def handle_command(cmd: dict) -> dict:
             "memories": _serialise(cr.memories),
             "reflections": _serialise(cr.reflections),
             "relationships": _serialise(cr.relationships),
+            "concepts": cr.concept_names,
+            "connections": cr.connections,
             "session": _serialise(session),
         }
 
@@ -84,6 +95,27 @@ def handle_command(cmd: dict) -> dict:
         session_id = cmd["session_id"]
         summary = _service.generate_summary(session_id)
         return {"ok": True, "summary": summary}
+
+    if command == "query":
+        result = _service.query_context(cmd["text"])
+        return {
+            "ok": True,
+            "query": cmd["text"],
+            "total_count": result.total_count,
+            "items": _serialise(result.items),
+        }
+
+    if command == "reflect":
+        session_id = cmd["session_id"]
+        summary = _reflection_service.reflect(session_id)
+        return {
+            "ok": True,
+            "primary_focus": summary.primary_focus,
+            "topics_explored": summary.topics_explored,
+            "progress": summary.progress,
+            "strongest_connections": summary.strongest_connections,
+            "reflection": summary.reflection,
+        }
 
     if command == "health":
         return {"ok": True, "status": "alive"}

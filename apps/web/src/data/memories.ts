@@ -57,6 +57,36 @@ export interface BridgeSession {
   summary: string | null
 }
 
+export interface BridgeQueryItem {
+  type: string
+  id: string
+  label: string
+  summary: string
+  score: number
+  session_id: string
+  session_date: string
+  memory_type?: string
+  matched_terms: string[]
+}
+
+export interface BridgeQueryResponse {
+  ok: boolean
+  error?: string
+  query?: string
+  total_count?: number
+  items?: BridgeQueryItem[]
+}
+
+export interface BridgeReflectResponse {
+  ok: boolean
+  error?: string
+  primary_focus: string
+  topics_explored: string[]
+  progress: Record<string, string[]>
+  strongest_connections: Array<{ source: string; target: string; relation: string }>
+  reflection: string
+}
+
 // ---------------------------------------------------------------------------
 // UI-facing types
 // ---------------------------------------------------------------------------
@@ -71,6 +101,8 @@ export interface TimelineItem {
   memoryType?: string
   displayLabel?: string
   relatedTo?: string[]
+  concepts?: string[]
+  connections?: string[]
   createdAt: Date
 }
 

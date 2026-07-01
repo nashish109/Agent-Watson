@@ -12,6 +12,12 @@ from memory.relationships import (
 from memory.service import MemoryService, MemoryResult
 from memory.summarizer import summarize
 from memory.session import SessionService, ContributionResult
+from memory.reflection_v2 import (
+    ReflectionContext,
+    ReflectionSummary,
+    ReflectionEngineV2,
+    SessionReflectionService,
+)
 
 __all__ = [
     "MemoryType",
@@ -35,4 +41,8 @@ __all__ = [
     "summarize",
     "SessionService",
     "ContributionResult",
+    "ReflectionContext",
+    "ReflectionSummary",
+    "ReflectionEngineV2",
+    "SessionReflectionService",
 ]

@@ -9,6 +9,9 @@ import type {
   BridgeMemory,
   BridgeReflection,
   BridgeRelationship,
+  BridgeQueryResponse,
+  BridgeQueryItem,
+  BridgeReflectResponse,
 } from "@/data/memories"
 import { buildSessionTitle } from "@/data/memories"
 
@@ -27,6 +30,8 @@ interface BridgeResponse {
   memories?: BridgeMemory[]
   reflections?: BridgeReflection[]
   relationships?: BridgeRelationship[]
+  concepts?: string[]
+  connections?: string[]
   summary?: string
 }
 
@@ -139,6 +144,8 @@ export function useSession() {
           type: "reflection",
           content: r.text,
           relatedTo: r.related_to?.length ? r.related_to : undefined,
+          concepts: data.concepts?.length ? data.concepts : undefined,
+          connections: data.connections?.length ? data.connections : undefined,
           createdAt: new Date(r.created_at),
         })
       }
@@ -160,5 +167,48 @@ export function useSession() {
     return session
   }, [session])
 
-  return { session, contribute, getSession }
+  const query = useCallback(
+    async (text: string): Promise<BridgeQueryItem[]> => {
+      const sessionId = await ensureSession()
+
+      const res = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cmd: "query", session_id: sessionId, text }),
+      })
+
+      const data: BridgeQueryResponse = await res.json()
+      if (!data.ok) {
+        throw new Error(data.error ?? "Query failed")
+      }
+
+      return data.items ?? []
+    },
+    [ensureSession],
+  )
+
+  const reflect = useCallback(async () => {
+    const sessionId = await ensureSession()
+
+    const res = await fetch("/api/memory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cmd: "reflect", session_id: sessionId }),
+    })
+
+    const data: BridgeReflectResponse = await res.json()
+    if (!data.ok) {
+      throw new Error(data.error ?? "Reflect failed")
+    }
+
+    return {
+      primary_focus: data.primary_focus,
+      topics_explored: data.topics_explored,
+      progress: data.progress,
+      strongest_connections: data.strongest_connections,
+      reflection: data.reflection,
+    }
+  }, [ensureSession])
+
+  return { session, contribute, query, reflect, getSession }
 }

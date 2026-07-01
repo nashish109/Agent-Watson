@@ -6,10 +6,14 @@ import { LivingCanvas } from "@/components/living-canvas"
 import { SessionHeader } from "@/components/session-header"
 import { MemoryCard } from "@/components/memory-card"
 import { ContributionInput } from "@/components/contribution-input"
+import { ContextQueryPanel } from "@/components/context-query-panel"
+import { TodayReflection } from "@/components/today-reflection"
 import { useSession } from "@/hooks/use-session"
 
+const DEV_MODE = true
+
 export default function HomePage() {
-  const { session, contribute } = useSession()
+  const { session, contribute, query, reflect } = useSession()
   const [showInput, setShowInput] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -94,6 +98,13 @@ export default function HomePage() {
 
       {showInput && (
         <ContributionInput onSubmit={handleContribute} onCancel={handleCancel} />
+      )}
+
+      {DEV_MODE && (
+        <div className="mx-auto w-full max-w-2xl space-y-6 px-4 pb-8">
+          <ContextQueryPanel onQuery={query} />
+          <TodayReflection onReflect={reflect} />
+        </div>
       )}
     </MainLayout>
   )
