@@ -16,8 +16,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "clean": "turbo clean && rm -rf node_modules",
-    "typecheck": "turbo typecheck",
-    "seed": "python -m agent_watson_seeder"
+    "typecheck": "turbo typecheck"
   },
   "devDependencies": {
     "turbo": "^2.3.0",

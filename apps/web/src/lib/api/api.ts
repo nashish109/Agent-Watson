@@ -1,11 +1,4 @@
-import type {
-  CreateSessionResponse,
-  GetSessionResponse,
-  ContributeResponse,
-  QueryItem,
-  QueryResponse,
-  ReflectResponse,
-} from "./types"
+import type { Session, ChatResponse, QueryResponse, ReflectResponse, Goal, GoalProgressUpdate, CreateGoalRequest, AddProgressRequest, ConceptGraphResponse, InsightsResponse } from "./types"
 import { ApiConnectionError } from "./errors"
 
 const USER_ID = "default"
@@ -36,68 +29,80 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return data as T
 }
 
+async function apiGet<T>(path: string): Promise<T> {
+  const baseUrl = getBaseUrl()
+  const url = `${baseUrl}${path}`
+  const res = await fetch(url)
+  if (!res.ok) {
+    throw new ApiConnectionError(`API error: ${res.status} ${res.statusText}`)
+  }
+  return res.json() as Promise<T>
+}
+
 export async function createSession(
   userId: string = USER_ID,
-  workspaceId?: string,
-): Promise<CreateSessionResponse> {
-  return apiPost<CreateSessionResponse>("/api/memory", {
-    cmd: "create_session",
-    user_id: userId,
-    workspace_id: workspaceId,
-  })
+): Promise<Session> {
+  return apiPost<Session>("/api/sessions", { userId })
 }
 
-export async function getSession(
+export async function getSession(sessionId: string): Promise<Session> {
+  return apiGet<Session>(`/api/sessions/${sessionId}`)
+}
+
+export async function chat(
   sessionId: string,
+  message: string,
   userId: string = USER_ID,
-): Promise<GetSessionResponse> {
-  return apiPost<GetSessionResponse>("/api/memory", {
-    cmd: "get_session",
-    session_id: sessionId,
-    user_id: userId,
-  })
-}
-
-export async function contribute(
-  sessionId: string,
-  userId: string,
-  text: string,
-): Promise<ContributeResponse> {
-  return apiPost<ContributeResponse>("/api/memory", {
-    cmd: "contribute",
-    session_id: sessionId,
-    user_id: userId,
-    text,
-    source: "user",
-  })
+): Promise<ChatResponse> {
+  return apiPost<ChatResponse>("/api/chat", { sessionId, message, userId })
 }
 
 export async function getContext(
   text: string,
   userId: string = USER_ID,
 ): Promise<QueryResponse> {
-  return apiPost<QueryResponse>("/api/memory", {
-    cmd: "query",
-    text,
-    user_id: userId,
-  })
+  return apiPost<QueryResponse>("/api/search", { text, userId })
 }
 
 export async function getReflection(
   sessionId: string,
   userId: string = USER_ID,
 ): Promise<ReflectResponse> {
-  return apiPost<ReflectResponse>("/api/memory", {
-    cmd: "reflect",
-    session_id: sessionId,
-    user_id: userId,
-  })
+  return apiPost<ReflectResponse>(`/api/sessions/${sessionId}/reflect`, { userId })
 }
 
-export async function queryItems(
-  text: string,
-  userId: string = USER_ID,
-): Promise<QueryItem[]> {
-  const result = await getContext(text, userId)
-  return result.items ?? []
+export async function createGoal(req: CreateGoalRequest, userId: string = USER_ID): Promise<Goal> {
+  return apiPost<Goal>("/api/goals", { ...req, userId })
+}
+
+export async function getGoals(userId: string = USER_ID): Promise<Goal[]> {
+  return apiGet<Goal[]>(`/api/goals?userId=${userId}`)
+}
+
+export async function updateGoal(goalId: string, req: Record<string, unknown>): Promise<Goal> {
+  return apiPost<Goal>(`/api/goals/${goalId}`, req)
+}
+
+export async function addGoalProgress(goalId: string, req: AddProgressRequest): Promise<GoalProgressUpdate> {
+  return apiPost<GoalProgressUpdate>(`/api/goals/${goalId}/progress`, req)
+}
+
+export async function getGoalProgress(goalId: string): Promise<GoalProgressUpdate[]> {
+  return apiGet<GoalProgressUpdate[]>(`/api/goals/${goalId}/progress`)
+}
+
+export async function deleteGoal(goalId: string): Promise<void> {
+  await apiPost(`/api/goals/${goalId}/delete`, {})
+}
+
+export async function getConceptGraph(): Promise<ConceptGraphResponse> {
+  return apiGet<ConceptGraphResponse>("/api/concepts/graph")
+}
+
+export async function generateInsights(userId: string = USER_ID): Promise<InsightsResponse> {
+  return apiPost<InsightsResponse>("/api/insights/generate", { userId })
+}
+
+export async function getInsights(userId: string = USER_ID): Promise<InsightsResponse> {
+  return apiGet<InsightsResponse>(`/api/insights?userId=${userId}`)
 }

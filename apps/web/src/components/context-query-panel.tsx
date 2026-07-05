@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import type { BridgeQueryItem } from "@/data/memories"
+import type { QueryItem } from "@/data/memories"
 
 interface Props {
-  onQuery: (text: string) => Promise<BridgeQueryItem[]>
+  onQuery: (text: string) => Promise<QueryItem[]>
 }
 
 export function ContextQueryPanel({ onQuery }: Props) {
   const [queryText, setQueryText] = useState("")
-  const [results, setResults] = useState<BridgeQueryItem[]>([])
+  const [results, setResults] = useState<QueryItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

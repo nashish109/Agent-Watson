@@ -4,12 +4,9 @@ import { useState, useCallback, useEffect, useRef } from "react"
 import type {
   Session,
   TimelineItem,
-  BridgeQueryItem,
 } from "@/data/memories"
 import { buildSessionTitle } from "@/data/memories"
 import * as api from "@/lib/api/api"
-import { ApiConnectionError } from "@/lib/api/errors"
-import type { ContributeResponse } from "@/lib/api/types"
 
 const USER_ID = "default"
 const STORAGE_KEY = "watson_session_id"
@@ -20,21 +17,18 @@ export function useSession(workspaceId?: string) {
   const wsRef = useRef(workspaceId)
   wsRef.current = workspaceId
 
-  // Restore session from localStorage on mount
   useEffect(() => {
     const storedId = localStorage.getItem(STORAGE_KEY)
     if (storedId) {
       sessionIdRef.current = storedId
-      api.getSession(storedId, USER_ID).then((s) => {
-        if (s) {
-          setSession({
-            id: s.id,
-            title: buildSessionTitle(new Date(s.session_date)),
-            date: new Date(s.session_date),
-            items: [],
-            summary: s.summary ?? null,
-          })
-        }
+      api.getSession(storedId).then((s) => {
+        setSession({
+          id: s.id,
+          title: buildSessionTitle(new Date(s.sessionDate)),
+          date: new Date(s.sessionDate),
+          items: [],
+          summary: s.summary ?? null,
+        })
       }).catch(() => {
         localStorage.removeItem(STORAGE_KEY)
         sessionIdRef.current = null
@@ -45,14 +39,14 @@ export function useSession(workspaceId?: string) {
   const ensureSession = useCallback(async (): Promise<string> => {
     if (sessionIdRef.current) return sessionIdRef.current
 
-    const s = await api.createSession(USER_ID, wsRef.current)
+    const s = await api.createSession(USER_ID)
     sessionIdRef.current = s.id
     localStorage.setItem(STORAGE_KEY, s.id)
 
     setSession({
       id: s.id,
-      title: buildSessionTitle(new Date(s.session_date)),
-      date: new Date(s.session_date),
+      title: buildSessionTitle(new Date(s.sessionDate)),
+      date: new Date(s.sessionDate),
       items: [],
       summary: s.summary ?? null,
     })
@@ -64,29 +58,26 @@ export function useSession(workspaceId?: string) {
     async (text: string): Promise<TimelineItem[]> => {
       const sessionId = await ensureSession()
 
-      const data: ContributeResponse = await api.contribute(
-        sessionId,
-        USER_ID,
-        text,
-      )
+      const data = await api.chat(sessionId, text, USER_ID)
 
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       const now = new Date()
 
-      const items: TimelineItem[] = [
-        {
-          id: `user-${id}`,
-          type: "contribution",
-          content: text,
-          createdAt: now,
-        },
-        {
-          id: `watson-${id}`,
-          type: "response",
-          content: data.reply,
-          createdAt: now,
-        },
-      ]
+      const userItem: TimelineItem = {
+        id: `user-${id}`,
+        type: "contribution",
+        content: text,
+        createdAt: now,
+      }
+
+      const watsonItem: TimelineItem = {
+        id: `watson-${id}`,
+        type: "response",
+        content: data.reply,
+        createdAt: now,
+      }
+
+      const items = [userItem, watsonItem]
 
       setSession((prev) => {
         if (!prev) return prev
@@ -106,7 +97,7 @@ export function useSession(workspaceId?: string) {
   }, [session])
 
   const query = useCallback(
-    async (text: string): Promise<BridgeQueryItem[]> => {
+    async (text: string) => {
       await ensureSession()
       const result = await api.getContext(text, USER_ID)
       return result.items.map((item) => ({
@@ -127,40 +118,27 @@ export function useSession(workspaceId?: string) {
   const reflect = useCallback(async () => {
     await ensureSession()
     const sid = sessionIdRef.current!
-    try {
-      const summary = await api.getReflection(sid, USER_ID)
-      return {
-        primary_focus: summary!.primary_focus,
-        topics_explored: summary!.topics_explored,
-        progress: summary!.progress,
-        strongest_connections: summary!.strongest_connections,
-        reflection: summary!.reflection,
-      }
-    } catch (err: unknown) {
-      if (err instanceof ApiConnectionError) throw err
-      return {
-        primary_focus: "Unknown",
-        topics_explored: [],
-        progress: {},
-        strongest_connections: [],
-        reflection: "Submit more contributions to generate a reflection.",
-      }
+    const summary = await api.getReflection(sid, USER_ID)
+    return {
+      primary_focus: summary.primary_focus,
+      topics_explored: summary.topics_explored,
+      progress: summary.progress,
+      strongest_connections: summary.strongest_connections,
+      reflection: summary.reflection,
     }
   }, [ensureSession])
 
   const loadSession = useCallback(async (sessionId: string) => {
     sessionIdRef.current = sessionId
     localStorage.setItem(STORAGE_KEY, sessionId)
-    const s = await api.getSession(sessionId, USER_ID)
-    if (s) {
-      setSession({
-        id: s.id,
-        title: buildSessionTitle(new Date(s.session_date)),
-        date: new Date(s.session_date),
-        items: [],
-        summary: s.summary ?? null,
-      })
-    }
+    const s = await api.getSession(sessionId)
+    setSession({
+      id: s.id,
+      title: buildSessionTitle(new Date(s.sessionDate)),
+      date: new Date(s.sessionDate),
+      items: [],
+      summary: s.summary ?? null,
+    })
   }, [])
 
   const clearSession = useCallback(() => {
@@ -169,5 +147,13 @@ export function useSession(workspaceId?: string) {
     setSession(null)
   }, [])
 
-  return { session, contribute, query, reflect, getSession, loadSession, clearSession }
+  return {
+    session,
+    contribute,
+    query,
+    reflect,
+    getSession,
+    loadSession,
+    clearSession,
+  }
 }

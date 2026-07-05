@@ -15,9 +15,10 @@ interface MainLayoutProps {
   onSelectWorkspace: (workspaceId: string) => void
   onGrowth: () => void
   onInsights: () => void
+  onGraph: () => void
 }
 
-export function MainLayout({ children, workspaces, currentWorkspaceId, onSelectWorkspace, onGrowth, onInsights }: MainLayoutProps) {
+export function MainLayout({ children, workspaces, currentWorkspaceId, onSelectWorkspace, onGrowth, onInsights, onGraph }: MainLayoutProps) {
   const [open, setOpen] = useState(false)
   const [pinned, setPinned] = useState(() => {
     if (typeof window === "undefined") return false
@@ -71,6 +72,11 @@ export function MainLayout({ children, workspaces, currentWorkspaceId, onSelectW
     if (!pinned) setOpen(false)
   }, [onInsights, pinned])
 
+  const handleGraph = useCallback(() => {
+    onGraph()
+    if (!pinned) setOpen(false)
+  }, [onGraph, pinned])
+
   const showSidebar = open || (pinned && typeof window !== "undefined")
 
   return (
@@ -103,6 +109,7 @@ export function MainLayout({ children, workspaces, currentWorkspaceId, onSelectW
           onSelectWorkspace={handleSelect}
           onGrowth={handleGrowth}
           onInsights={handleInsights}
+          onGraph={handleGraph}
         />
 
         {/* Pin toggle — desktop only */}

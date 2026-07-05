@@ -1,6 +1,6 @@
 export class ApiConnectionError extends Error {
-  constructor(message = "Unable to reach the backend. Please check your connection.") {
-    super(message)
+  constructor(message?: string) {
+    super(message ?? "Unable to reach Watson's backend. Please check your connection.")
     this.name = "ApiConnectionError"
   }
 }

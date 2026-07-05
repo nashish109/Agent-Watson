@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: agent-watson-server
+    env: node
+    buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @agent-watson/shared build && pnpm --filter @agent-watson/server build
+    startCommand: cd server && node dist/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL
+        sync: false
+      - key: AI_PROVIDER
+        value: openrouter
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openai/gpt-4o-mini
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0

@@ -5,13 +5,14 @@ import { Sparkles, ArrowLeft } from "lucide-react"
 import { MainLayout } from "@/components/main-layout"
 import { GrowthPage } from "@/components/growth-page"
 import { InsightsPage } from "@/components/insights-page"
+import { GraphPage } from "@/components/graph-page"
 import { DailyJourney } from "@/components/daily-journey"
 import { WorkspaceLanding } from "@/components/workspace-landing"
 import { OnboardingFlow } from "@/components/onboarding-flow"
 import { useSession } from "@/hooks/use-session"
 import { useWorkspace } from "@/hooks/use-workspace"
 
-type View = "landing" | "session" | "growth" | "insights"
+type View = "landing" | "session" | "growth" | "insights" | "graph"
 
 type DailyMode = "morning" | "focus" | "evening"
 
@@ -84,6 +85,10 @@ export default function HomePage() {
     navigate("insights")
   }, [navigate])
 
+  const handleGraph = useCallback(() => {
+    navigate("graph")
+  }, [navigate])
+
   const handleBackFromGrowth = useCallback(() => {
     const target = prevView && prevView !== "growth" ? prevView : "landing"
     navigate(target)
@@ -91,6 +96,11 @@ export default function HomePage() {
 
   const handleBackFromInsights = useCallback(() => {
     const target = prevView && prevView !== "insights" ? prevView : "landing"
+    navigate(target)
+  }, [navigate, prevView])
+
+  const handleBackFromGraph = useCallback(() => {
+    const target = prevView && prevView !== "graph" ? prevView : "landing"
     navigate(target)
   }, [navigate, prevView])
 
@@ -132,6 +142,7 @@ export default function HomePage() {
         onSelectWorkspace={selectWorkspace}
         onGrowth={handleGrowth}
         onInsights={handleInsights}
+        onGraph={handleGraph}
       >
         <div className="relative h-full overflow-hidden">
           {/* Growth View */}
@@ -172,12 +183,31 @@ export default function HomePage() {
             <InsightsPage />
           </div>
 
+          {/* Graph View */}
+          <div
+            className={`absolute inset-0 transition-all duration-300 ease-out ${
+              view === "graph"
+                ? "translate-x-0 opacity-100"
+                : "translate-x-8 opacity-0 pointer-events-none"
+            }`}
+          >
+            <button
+              onClick={handleBackFromGraph}
+              className="absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary/70 transition-colors hover:bg-accent hover:text-primary"
+              aria-label="Back to today"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to Today
+            </button>
+            <GraphPage />
+          </div>
+
           {/* Landing View */}
           <div
             className={`absolute inset-0 transition-all duration-300 ease-out ${
               view === "landing"
                 ? "translate-x-0 opacity-100"
-                : view === "growth" || view === "insights"
+                : view === "growth" || view === "insights" || view === "graph"
                   ? "-translate-x-8 opacity-0 pointer-events-none"
                   : "translate-x-0 opacity-0 pointer-events-none"
             }`}

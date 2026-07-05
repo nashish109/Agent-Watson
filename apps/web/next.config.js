@@ -1,12 +1,7 @@
-// @ts-check
-
-/**
- * Next.js configuration for the Agent Watson web application.
- * @type {import('next').NextConfig}
- */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@agent-watson/shared", "@agent-watson/ui", "@agent-watson/config"],
-};
+  transpilePackages: ["@agent-watson/shared"],
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

@@ -20,15 +20,7 @@ build/
 .next/
 out/
 *.tsbuildinfo
-target/           # Rust build artifacts (future CLI)
-__pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-*.egg
-.venv/
-venv/
-*.so
+target/
 
 # --- Environment & Secrets ---
 .env
