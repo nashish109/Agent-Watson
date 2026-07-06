@@ -140,8 +140,16 @@ export interface Insight {
   createdAt: string
 }
 
+export interface Briefing {
+  todaySummary: string
+  keyInsight: string
+  recommendation: string
+  watchFor?: string
+}
+
 export interface InsightsResponse {
   ok: boolean
-  insights: Insight[]
+  insights?: Insight[]
+  briefing?: Briefing | null
   message?: string
 }

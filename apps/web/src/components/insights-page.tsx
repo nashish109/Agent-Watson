@@ -1,68 +1,28 @@
 "use client"
 
-import { Lightbulb } from "lucide-react"
+import { Lightbulb, Target, Eye, ArrowRight, RefreshCw } from "lucide-react"
 import { useInsights } from "@/hooks/use-insights"
-import { cn } from "@/lib/utils"
-import { useState, useEffect } from "react"
 import { EmptyState } from "./ui/empty-state"
 
-const INSIGHT_ICONS: Record<string, string> = {
-  pattern: "border-blue-400/20 bg-blue-500/5",
-  trend: "border-violet-400/20 bg-violet-500/5",
-  observation: "border-emerald-400/20 bg-emerald-500/5",
-  milestone: "border-amber-400/20 bg-amber-500/5",
-  suggestion: "border-rose-400/20 bg-rose-500/5",
-}
-
-const INSIGHT_DOTS: Record<string, string> = {
-  pattern: "bg-blue-400",
-  trend: "bg-violet-400",
-  observation: "bg-emerald-400",
-  milestone: "bg-amber-400",
-  suggestion: "bg-rose-400",
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  learning: "Learning",
-  project: "Project",
-  career: "Career",
-  health: "Health",
-  reflection: "Reflection",
-  generic: "General",
-}
-
 export function InsightsPage() {
-  const { insights, loading, generating, error, generate } = useInsights()
-  const [message, setMessage] = useState<string | null>(null)
-
-  const handleGenerate = async () => {
-    setMessage(null)
-    const msg = await generate()
-    if (msg) setMessage(msg)
-  }
-
-  useEffect(() => {
-    if (!loading && insights.length === 0 && !generating) {
-      handleGenerate()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading])
+  const { briefing, loading, generating, error, message, generate } = useInsights()
 
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Insights</h2>
+          <h2 className="text-lg font-semibold text-foreground">Briefing</h2>
           <p className="mt-0.5 text-xs text-muted-foreground/50">
-            Patterns and trends from your conversations
+            Your daily executive summary
           </p>
         </div>
         <button
-          onClick={handleGenerate}
+          onClick={generate}
           disabled={generating}
-          className="rounded-lg bg-primary/15 px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/25 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/25 disabled:opacity-50"
         >
-          {generating ? "Generating..." : "Generate Insights"}
+          <RefreshCw className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} />
+          {generating ? "Generating..." : "Refresh"}
         </button>
       </div>
 
@@ -72,60 +32,85 @@ export function InsightsPage() {
         </div>
       )}
 
-      {message && (
-        <div className="mb-4 rounded-lg border border-amber-400/20 bg-amber-500/5 px-4 py-2 text-xs text-amber-400/70">
-          {message}
-        </div>
-      )}
-
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <p className="text-xs text-muted-foreground/40">Loading insights...</p>
+          <div className="text-center space-y-3">
+            <RefreshCw className="mx-auto h-5 w-5 animate-spin text-muted-foreground/30" />
+            <p className="text-xs text-muted-foreground/40">Analyzing your patterns...</p>
+          </div>
         </div>
-      ) : insights.length === 0 ? (
+      ) : message && !briefing ? (
         <EmptyState
           icon={Lightbulb}
-          title="No insights yet"
-          description="Start a conversation with Watson, then generate insights to uncover patterns, trends, and observations from your discussions."
-          action={{ label: "Generate Insights", onClick: handleGenerate }}
+          title="Not enough data yet"
+          description={message}
+          action={{ label: "Start a conversation", onClick: () => {} }}
         />
-      ) : (
-        <div className="space-y-3">
-          {insights.map((insight) => (
-            <div
-              key={insight.id}
-              className={cn(
-                "rounded-xl border px-4 py-3.5",
-                INSIGHT_ICONS[insight.type] ?? "border-border/30 bg-card",
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <span className={cn(
-                  "mt-1 h-2 w-2 shrink-0 rounded-full",
-                  INSIGHT_DOTS[insight.type] ?? "bg-muted-foreground/30",
-                )} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-medium text-foreground">{insight.title}</h4>
-                    <span className="rounded-full border border-border/20 px-2 py-0.5 text-[10px] text-muted-foreground/50">
-                      {CATEGORY_LABELS[insight.category] ?? insight.category}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground/30">
-                      {(insight.strength * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground/60 leading-relaxed">
-                    {insight.description}
-                  </p>
-                  <p className="mt-1.5 text-[10px] text-muted-foreground/30">
-                    {new Date(insight.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+      ) : briefing ? (
+        <div className="space-y-4 animate-fade-in">
+          {/* Today's Summary */}
+          <div className="rounded-xl border border-border/30 bg-card px-5 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                <Lightbulb className="h-3.5 w-3.5 text-primary" />
               </div>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40">
+                Today&apos;s Summary
+              </span>
             </div>
-          ))}
+            <p className="text-sm leading-relaxed text-foreground/85">
+              {briefing.todaySummary}
+            </p>
+          </div>
+
+          {/* Key Insight */}
+          <div className="rounded-xl border border-amber-400/20 bg-amber-500/5 px-5 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/15">
+                <Target className="h-3.5 w-3.5 text-amber-400" />
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-amber-400/60">
+                Key Insight
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground/85">
+              {briefing.keyInsight}
+            </p>
+          </div>
+
+          {/* Recommendation */}
+          <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 px-5 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
+                <ArrowRight className="h-3.5 w-3.5 text-emerald-400" />
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400/60">
+                Recommendation
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground/85">
+              {briefing.recommendation}
+            </p>
+          </div>
+
+          {/* Watch For (optional) */}
+          {briefing.watchFor && (
+            <div className="rounded-xl border border-violet-400/15 bg-violet-500/5 px-5 py-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/15">
+                  <Eye className="h-3.5 w-3.5 text-violet-400" />
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-violet-400/60">
+                  Watch For
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground/85">
+                {briefing.watchFor}
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
