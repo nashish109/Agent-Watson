@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
-import { insertSession, getSessionMessages } from "../db/db-service.js"
+import { insertSession, getSessionMessages, getSessionById } from "../db/db-service.js"
 
 interface SessionData {
   id: string
@@ -58,9 +58,24 @@ export async function sessionRoutes(app: FastifyInstance) {
   })
 
   app.get<{ Params: { id: string } }>("/api/sessions/:id", async (request) => {
-    const session = sessions.get(request.params.id)
+    const id = request.params.id
+    let session = sessions.get(id)
     if (!session) {
-      return { ok: false, error: "Session not found" }
+      const dbSession = await getSessionById(id)
+      if (!dbSession) {
+        return { ok: false, error: "Session not found" }
+      }
+      sessions.set(id, {
+        id: dbSession.id,
+        userId: dbSession.userId,
+        sessionDate: dbSession.sessionDate,
+        title: dbSession.title,
+        mode: dbSession.mode,
+        startedAt: dbSession.startedAt instanceof Date ? dbSession.startedAt.toISOString() : String(dbSession.startedAt),
+        endedAt: dbSession.endedAt ? (dbSession.endedAt instanceof Date ? dbSession.endedAt.toISOString() : String(dbSession.endedAt)) : undefined,
+        summary: dbSession.summary,
+      })
+      session = sessions.get(id)!
     }
     return {
       id: session.id,

@@ -38,7 +38,11 @@ async function apiGet<T>(path: string): Promise<T> {
     const bodyText = await res.text().catch(() => "")
     throw new ApiConnectionError(`${res.status} on ${path}${bodyText ? ` — ${bodyText.slice(0, 200)}` : ""}`)
   }
-  return res.json() as Promise<T>
+  const data = await res.json()
+  if (data && typeof data === "object" && "ok" in data && data.ok === false) {
+    throw new ApiConnectionError(data.error ?? `Error on ${path}`)
+  }
+  return data as T
 }
 
 export async function createSession(
