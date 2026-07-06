@@ -11,6 +11,8 @@ import { WorkspaceLanding } from "@/components/workspace-landing"
 import { OnboardingFlow } from "@/components/onboarding-flow"
 import { useSession } from "@/hooks/use-session"
 import { useWorkspace } from "@/hooks/use-workspace"
+import { useDailyContributionPrompt } from "@/hooks/use-daily-prompt"
+import { ContributionInput } from "@/components/contribution-input"
 
 type View = "landing" | "session" | "growth" | "insights" | "graph"
 
@@ -70,6 +72,13 @@ export default function HomePage() {
     clearSession()
     navigate("landing")
   }, [clearSession, navigate])
+
+  const dailyPrompt = useDailyContributionPrompt()
+
+  const handleDailyContribute = useCallback(async (content: string) => {
+    await handleContribute(content)
+    dailyPrompt.onSubmitted()
+  }, [handleContribute, dailyPrompt])
 
   const handleModeChange = useCallback((mode: DailyMode) => {
     savedModeRef.current = mode
@@ -133,6 +142,12 @@ export default function HomePage() {
             {error}
           </div>
         </div>
+      )}
+      {dailyPrompt.showPrompt && !dailyPrompt.loading && !onboardingDone && (
+        <ContributionInput
+          onSubmit={handleDailyContribute}
+          onCancel={dailyPrompt.dismiss}
+        />
       )}
       <MainLayout
         workspaces={workspaces}
@@ -258,6 +273,7 @@ export default function HomePage() {
               onGrowth={handleGrowth}
               initialMode={savedModeRef.current ?? undefined}
               onModeChange={handleModeChange}
+              disableInput={dailyPrompt.showPrompt}
             />
           </div>
         </div>

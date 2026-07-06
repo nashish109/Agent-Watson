@@ -52,6 +52,23 @@ export async function upsertUserProfile(data: { userId: string; name?: string; d
     .onConflictDoUpdate({ target: schema.userProfiles.userId, set: { ...data, updatedAt: new Date() } })
 }
 
+// ── Check Today ───────────────────────────────────────────────────
+export async function hasUserContributedToday(userId: string): Promise<boolean> {
+  if (!DB_ENABLED) return false
+  const today = new Date().toISOString().slice(0, 10)
+  const rows = await getDb()
+    .select({ id: schema.messages.id })
+    .from(schema.messages)
+    .where(
+      and(
+        eq(schema.messages.userId, userId),
+        sql`DATE(${schema.messages.createdAt}) = ${today}`,
+      ),
+    )
+    .limit(1)
+  return rows.length > 0
+}
+
 // ── Memory ────────────────────────────────────────────────────────
 export async function insertMemory(data: any): Promise<void> {
   if (!DB_ENABLED) return

@@ -116,3 +116,7 @@ export async function getInsights(userId: string = USER_ID): Promise<InsightsRes
 export async function getSessionMessages(sessionId: string): Promise<{ ok: boolean; messages: Array<{ role: string; content: string; createdAt: string }> }> {
   return apiGet(`/api/sessions/${sessionId}/messages`)
 }
+
+export async function checkToday(userId: string = USER_ID): Promise<{ ok: boolean; contributed: boolean }> {
+  return apiGet(`/api/user/check-today?userId=${userId}`)
+}

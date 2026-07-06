@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
-import { insertSession, getSessionMessages, getSessionById } from "../db/db-service.js"
+import { insertSession, getSessionMessages, getSessionById, hasUserContributedToday } from "../db/db-service.js"
 
 interface SessionData {
   id: string
@@ -96,5 +96,11 @@ export async function sessionRoutes(app: FastifyInstance) {
       createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
     }))
     return { ok: true, messages }
+  })
+
+  app.get("/api/user/check-today", async (request: any) => {
+    const userId = (request.query as any)?.userId ?? "default"
+    const contributed = await hasUserContributedToday(userId)
+    return { ok: true, contributed }
   })
 }

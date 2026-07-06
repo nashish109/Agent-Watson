@@ -24,6 +24,7 @@ interface DailyJourneyProps {
   onGrowth: () => void
   initialMode?: DailyMode
   onModeChange?: (mode: DailyMode) => void
+  disableInput?: boolean
 }
 
 export function DailyJourney({
@@ -36,6 +37,7 @@ export function DailyJourney({
   onGrowth,
   initialMode,
   onModeChange,
+  disableInput,
 }: DailyJourneyProps) {
   const [showInput, setShowInput] = useState(false)
   const { query, reflect } = useSession(currentWorkspace?.id)
@@ -63,7 +65,7 @@ export function DailyJourney({
             Share Something
           </button>
         </div>
-        {showInput && <ContributionInput onSubmit={handleContribute} onCancel={() => setShowInput(false)} />}
+        {showInput && !disableInput && <ContributionInput onSubmit={handleContribute} onCancel={() => setShowInput(false)} />}
       </LivingCanvas>
     )
   }
@@ -102,7 +104,7 @@ export function DailyJourney({
           Share what happened next...
         </button>
       </div>
-      {showInput && <ContributionInput onSubmit={handleContribute} onCancel={() => setShowInput(false)} />}
+      {showInput && !disableInput && <ContributionInput onSubmit={handleContribute} onCancel={() => setShowInput(false)} />}
       <ContextQueryPanel onQuery={query} />
       <TodayReflection onReflect={reflect} />
     </LivingCanvas>
