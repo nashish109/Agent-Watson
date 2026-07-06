@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect } from "react"
+import { Share2 } from "lucide-react"
 import type { Concept, ConceptEdge } from "@/lib/api/types"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "./ui/empty-state"
 
 interface ConceptGraphProps {
   concepts: Concept[]
@@ -90,11 +92,11 @@ export function ConceptGraph({ concepts, edges }: ConceptGraphProps) {
 
   if (concepts.length === 0) {
     return (
-      <div className="flex items-center justify-center py-20 text-center">
-        <p className="text-xs text-muted-foreground/40">
-          No concepts yet. Start a conversation to build your knowledge graph.
-        </p>
-      </div>
+      <EmptyState
+        icon={Share2}
+        title="No concepts yet"
+        description="Start a conversation with Watson to build your knowledge graph. Concepts, topics, and connections will appear here as you chat."
+      />
     )
   }
 

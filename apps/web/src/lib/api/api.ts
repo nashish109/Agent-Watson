@@ -20,11 +20,12 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   })
   if (!res.ok) {
-    throw new ApiConnectionError(`API error: ${res.status} ${res.statusText}`)
+    const bodyText = await res.text().catch(() => "")
+    throw new ApiConnectionError(`${res.status} on ${path}${bodyText ? ` — ${bodyText.slice(0, 200)}` : ""}`)
   }
   const data = await res.json()
   if (data && typeof data === "object" && "ok" in data && data.ok === false) {
-    throw new ApiConnectionError(data.error ?? "API returned an error")
+    throw new ApiConnectionError(data.error ?? `Error on ${path}`)
   }
   return data as T
 }
@@ -34,7 +35,8 @@ async function apiGet<T>(path: string): Promise<T> {
   const url = `${baseUrl}${path}`
   const res = await fetch(url)
   if (!res.ok) {
-    throw new ApiConnectionError(`API error: ${res.status} ${res.statusText}`)
+    const bodyText = await res.text().catch(() => "")
+    throw new ApiConnectionError(`${res.status} on ${path}${bodyText ? ` — ${bodyText.slice(0, 200)}` : ""}`)
   }
   return res.json() as Promise<T>
 }
@@ -105,4 +107,8 @@ export async function generateInsights(userId: string = USER_ID): Promise<Insigh
 
 export async function getInsights(userId: string = USER_ID): Promise<InsightsResponse> {
   return apiGet<InsightsResponse>(`/api/insights?userId=${userId}`)
+}
+
+export async function getSessionMessages(sessionId: string): Promise<{ ok: boolean; messages: Array<{ role: string; content: string; createdAt: string }> }> {
+  return apiGet(`/api/sessions/${sessionId}/messages`)
 }

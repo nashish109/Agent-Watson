@@ -18,10 +18,9 @@ type DailyMode = "morning" | "focus" | "evening"
 
 export default function HomePage() {
   const { workspaces, currentWorkspaceId, currentWorkspace, selectWorkspace } = useWorkspace()
-  const { session, contribute, clearSession, loadSession } = useSession(currentWorkspaceId ?? undefined)
+  const { session, contribute, clearSession, loadSession, startNewSession } = useSession(currentWorkspaceId ?? undefined)
   const [isProcessing, setIsProcessing] = useState(false)
   const [view, setView] = useState<View>("landing")
-  const [prevView, setPrevView] = useState<View | null>(null)
   const [onboardingDone, setOnboardingDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const justOnboarded = useRef(false)
@@ -35,9 +34,8 @@ export default function HomePage() {
   }, [error])
 
   const navigate = useCallback((to: View) => {
-    setPrevView(view)
     setView(to)
-  }, [view])
+  }, [])
 
   const handleContribute = useCallback(
     async (content: string) => {
@@ -58,10 +56,10 @@ export default function HomePage() {
 
   const handleActivate = useCallback(() => {}, [])
 
-  const handleStartSession = useCallback(() => {
-    clearSession()
+  const handleStartSession = useCallback(async () => {
+    await startNewSession()
     navigate("session")
-  }, [clearSession, navigate])
+  }, [startNewSession, navigate])
 
   const handleContinueSession = useCallback((sessionId: string) => {
     loadSession(sessionId)
@@ -77,6 +75,10 @@ export default function HomePage() {
     savedModeRef.current = mode
   }, [])
 
+  const handleSession = useCallback(() => {
+    navigate("session")
+  }, [navigate])
+
   const handleGrowth = useCallback(() => {
     navigate("growth")
   }, [navigate])
@@ -90,19 +92,16 @@ export default function HomePage() {
   }, [navigate])
 
   const handleBackFromGrowth = useCallback(() => {
-    const target = prevView && prevView !== "growth" ? prevView : "landing"
-    navigate(target)
-  }, [navigate, prevView])
+    navigate("session")
+  }, [navigate])
 
   const handleBackFromInsights = useCallback(() => {
-    const target = prevView && prevView !== "insights" ? prevView : "landing"
-    navigate(target)
-  }, [navigate, prevView])
+    navigate("session")
+  }, [navigate])
 
   const handleBackFromGraph = useCallback(() => {
-    const target = prevView && prevView !== "graph" ? prevView : "landing"
-    navigate(target)
-  }, [navigate, prevView])
+    navigate("session")
+  }, [navigate])
 
   const handleOnboardingComplete = useCallback(() => {
     setOnboardingDone(true)
@@ -120,7 +119,6 @@ export default function HomePage() {
       return
     }
     setView("landing")
-    setPrevView(null)
     clearSession()
   }, [currentWorkspaceId, clearSession])
 
@@ -140,6 +138,7 @@ export default function HomePage() {
         workspaces={workspaces}
         currentWorkspaceId={currentWorkspaceId}
         onSelectWorkspace={selectWorkspace}
+        onSession={handleSession}
         onGrowth={handleGrowth}
         onInsights={handleInsights}
         onGraph={handleGraph}
@@ -235,7 +234,7 @@ export default function HomePage() {
 
           {/* Session View — always mounted to preserve scroll & mode */}
           <div
-            className={`absolute inset-0 transition-all duration-300 ease-out ${
+            className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-out ${
               view === "session"
                 ? "translate-x-0 opacity-100"
                 : "translate-x-0 opacity-0 pointer-events-none"

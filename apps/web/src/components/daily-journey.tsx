@@ -10,6 +10,7 @@ import { LivingCanvas } from "@/components/living-canvas"
 import { ContextQueryPanel } from "@/components/context-query-panel"
 import { TodayReflection } from "@/components/today-reflection"
 import { useSession } from "@/hooks/use-session"
+import { cn } from "@/lib/utils"
 
 type DailyMode = "morning" | "focus" | "evening"
 
@@ -65,14 +66,25 @@ export function DailyJourney({
     <LivingCanvas onActivate={onActivate}>
       <SessionHeader title={session.title} date={session.date} />
       {isProcessing && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground/40">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary/60" />
-          Thinking...
+        <div className="mt-4 animate-fade-in rounded-xl border border-primary/15 bg-primary/5 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <span className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:0ms]" />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:150ms]" />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:300ms]" />
+            </div>
+            <span className="text-xs text-muted-foreground/50 font-medium">
+              Watson is thinking
+            </span>
+          </div>
+          <div className="mt-2 h-4 w-3/4 rounded bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 bg-[length:200%_100%] animate-shimmer" />
         </div>
       )}
       <div className="mt-6 space-y-3">
-        {session.items.map((item) => (
-          <MemoryCard key={item.id} item={item} />
+        {session.items.map((item, index) => (
+          <div key={item.id} style={{ animationDelay: `${index * 0.06}s` }}>
+            <MemoryCard item={item} />
+          </div>
         ))}
       </div>
       <div className="mt-6">

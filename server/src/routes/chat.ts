@@ -11,7 +11,7 @@ import {
 import { getInsightsForMemories, formatInsightsForContext } from "../services/insights.js"
 import { findRelatedGoals, formatGoalsForContext } from "../services/goals.js"
 import { extractAndStoreConcepts, getRelatedConcepts, formatConceptsForContext } from "../services/concepts.js"
-import { insertSession } from "../db/db-service.js"
+import { insertSession, insertMessage, getSessionMessages } from "../db/db-service.js"
 
 interface SessionData {
   id: string
@@ -56,6 +56,14 @@ export async function chatRoutes(app: FastifyInstance) {
     }
 
     session.messages.push({ role: "user", content: body.message })
+    insertMessage({
+      id: crypto.randomUUID(),
+      sessionId: body.sessionId,
+      userId: body.userId,
+      role: "user",
+      content: body.message,
+      createdAt: new Date(),
+    }).catch(() => {})
 
     const relevantMemories = await searchMemories(body.message, 5)
     const memoriesContext = formatMemoriesForContext(relevantMemories)
@@ -76,6 +84,14 @@ export async function chatRoutes(app: FastifyInstance) {
     })
 
     session.messages.push({ role: "assistant", content: reply })
+    insertMessage({
+      id: crypto.randomUUID(),
+      sessionId: body.sessionId,
+      userId: body.userId,
+      role: "assistant",
+      content: reply,
+      createdAt: new Date(),
+    }).catch(() => {})
 
     const storedMemory = await extractAndStoreMemory(
       body.sessionId,
@@ -150,4 +166,28 @@ export async function chatRoutes(app: FastifyInstance) {
       reflection: reflectionText,
     }
   })
+}
+
+export async function hydrateSessionMessages(data: Array<{
+  sessionId: string
+  userId: string
+  role: string
+  content: string
+  createdAt: string
+}>): Promise<void> {
+  for (const msg of data) {
+    let session = sessions.get(msg.sessionId)
+    if (!session) {
+      session = {
+        id: msg.sessionId,
+        userId: msg.userId,
+        sessionDate: new Date(msg.createdAt).toISOString().slice(0, 10),
+        mode: "focus",
+        startedAt: msg.createdAt,
+        messages: [],
+      }
+      sessions.set(msg.sessionId, session)
+    }
+    session.messages.push({ role: msg.role, content: msg.content })
+  }
 }

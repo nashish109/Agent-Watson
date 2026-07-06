@@ -13,12 +13,13 @@ interface MainLayoutProps {
   workspaces: Workspace[]
   currentWorkspaceId: string | null
   onSelectWorkspace: (workspaceId: string) => void
+  onSession: () => void
   onGrowth: () => void
   onInsights: () => void
   onGraph: () => void
 }
 
-export function MainLayout({ children, workspaces, currentWorkspaceId, onSelectWorkspace, onGrowth, onInsights, onGraph }: MainLayoutProps) {
+export function MainLayout({ children, workspaces, currentWorkspaceId, onSelectWorkspace, onSession, onGrowth, onInsights, onGraph }: MainLayoutProps) {
   const [open, setOpen] = useState(false)
   const [pinned, setPinned] = useState(() => {
     if (typeof window === "undefined") return false
@@ -107,6 +108,7 @@ export function MainLayout({ children, workspaces, currentWorkspaceId, onSelectW
           workspaces={workspaces}
           currentWorkspaceId={currentWorkspaceId}
           onSelectWorkspace={handleSelect}
+          onSession={onSession}
           onGrowth={handleGrowth}
           onInsights={handleInsights}
           onGraph={handleGraph}

@@ -1,8 +1,10 @@
 "use client"
 
+import { Lightbulb } from "lucide-react"
 import { useInsights } from "@/hooks/use-insights"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { EmptyState } from "./ui/empty-state"
 
 const INSIGHT_ICONS: Record<string, string> = {
   pattern: "border-blue-400/20 bg-blue-500/5",
@@ -74,11 +76,12 @@ export function InsightsPage() {
           <p className="text-xs text-muted-foreground/40">Loading insights...</p>
         </div>
       ) : insights.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-xs text-muted-foreground/40">
-            No insights yet. Start a conversation, then generate insights to see patterns emerge.
-          </p>
-        </div>
+        <EmptyState
+          icon={Lightbulb}
+          title="No insights yet"
+          description="Start a conversation with Watson, then generate insights to uncover patterns, trends, and observations from your discussions."
+          action={{ label: "Generate Insights", onClick: handleGenerate }}
+        />
       ) : (
         <div className="space-y-3">
           {insights.map((insight) => (

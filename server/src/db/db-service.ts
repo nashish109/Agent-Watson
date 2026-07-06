@@ -17,6 +17,28 @@ export async function getSessionById(id: string): Promise<any> {
   return rows[0] ?? null
 }
 
+// ── Message ───────────────────────────────────────────────────────
+export async function insertMessage(data: {
+  id: string
+  sessionId: string
+  userId: string
+  role: string
+  content: string
+  createdAt: Date
+}): Promise<void> {
+  if (!DB_ENABLED) return
+  await getDb().insert(schema.messages).values(data)
+}
+
+export async function getSessionMessages(sessionId: string): Promise<any[]> {
+  if (!DB_ENABLED) return []
+  return getDb()
+    .select()
+    .from(schema.messages)
+    .where(eq(schema.messages.sessionId, sessionId))
+    .orderBy(schema.messages.createdAt)
+}
+
 // ── Memory ────────────────────────────────────────────────────────
 export async function insertMemory(data: any): Promise<void> {
   if (!DB_ENABLED) return

@@ -116,6 +116,17 @@ export const conceptEdges = pgTable("concept_edges", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
+export const messages = pgTable("messages", {
+  id: text("id").primaryKey(),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessions.id),
+  userId: text("user_id").references(() => users.id),
+  role: text("role").notNull().default("user"),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
 export const goals = pgTable("goals", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id),

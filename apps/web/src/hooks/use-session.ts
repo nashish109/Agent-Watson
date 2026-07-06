@@ -21,12 +21,21 @@ export function useSession(workspaceId?: string) {
     const storedId = localStorage.getItem(STORAGE_KEY)
     if (storedId) {
       sessionIdRef.current = storedId
-      api.getSession(storedId).then((s) => {
+      Promise.all([
+        api.getSession(storedId),
+        api.getSessionMessages(storedId),
+      ]).then(([s, msgRes]) => {
+        const items: TimelineItem[] = msgRes.messages.map((m, i) => ({
+          id: `msg-${i}`,
+          type: m.role === "user" ? "contribution" as const : "response" as const,
+          content: m.content,
+          createdAt: new Date(m.createdAt),
+        }))
         setSession({
           id: s.id,
           title: buildSessionTitle(new Date(s.sessionDate)),
           date: new Date(s.sessionDate),
-          items: [],
+          items,
           summary: s.summary ?? null,
         })
       }).catch(() => {
@@ -131,7 +140,29 @@ export function useSession(workspaceId?: string) {
   const loadSession = useCallback(async (sessionId: string) => {
     sessionIdRef.current = sessionId
     localStorage.setItem(STORAGE_KEY, sessionId)
-    const s = await api.getSession(sessionId)
+    const [s, msgRes] = await Promise.all([
+      api.getSession(sessionId),
+      api.getSessionMessages(sessionId),
+    ])
+    const items: TimelineItem[] = msgRes.messages.map((m, i) => ({
+      id: `msg-${i}`,
+      type: m.role === "user" ? "contribution" as const : "response" as const,
+      content: m.content,
+      createdAt: new Date(m.createdAt),
+    }))
+    setSession({
+      id: s.id,
+      title: buildSessionTitle(new Date(s.sessionDate)),
+      date: new Date(s.sessionDate),
+      items,
+      summary: s.summary ?? null,
+    })
+  }, [])
+
+  const startNewSession = useCallback(async (): Promise<string> => {
+    const s = await api.createSession(USER_ID)
+    sessionIdRef.current = s.id
+    localStorage.setItem(STORAGE_KEY, s.id)
     setSession({
       id: s.id,
       title: buildSessionTitle(new Date(s.sessionDate)),
@@ -139,6 +170,7 @@ export function useSession(workspaceId?: string) {
       items: [],
       summary: s.summary ?? null,
     })
+    return s.id
   }, [])
 
   const clearSession = useCallback(() => {
@@ -154,6 +186,7 @@ export function useSession(workspaceId?: string) {
     reflect,
     getSession,
     loadSession,
+    startNewSession,
     clearSession,
   }
 }

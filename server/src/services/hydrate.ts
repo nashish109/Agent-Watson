@@ -7,6 +7,7 @@ import { hydrateGoals, hydrateGoalProgress } from "./goals.js"
 import { hydrateConcepts, hydrateEdges } from "./concepts.js"
 import { hydrateInsights } from "./insights.js"
 import { hydrateSessions, getAllSessions } from "../routes/sessions.js"
+import { hydrateSessionMessages } from "../routes/chat.js"
 import * as schema from "../db/schema.js"
 
 function parseEmbedding(v: unknown): number[] {
@@ -118,6 +119,19 @@ export async function hydrateFromDb(): Promise<void> {
           strength: i.strength,
           relatedMemoryIds: i.relatedMemoryIds ?? [],
           createdAt: toIso(i.createdAt),
+        })),
+      )
+    }
+
+    const dbMessages = await getDb().select().from(schema.messages).orderBy(schema.messages.createdAt)
+    if (dbMessages.length > 0) {
+      await hydrateSessionMessages(
+        dbMessages.map((m: any) => ({
+          sessionId: m.sessionId,
+          userId: m.userId,
+          role: m.role,
+          content: m.content,
+          createdAt: toIso(m.createdAt),
         })),
       )
     }

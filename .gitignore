@@ -90,3 +90,5 @@ docker-compose.override.yml
 junit.xml
 
 .vercel
+.turbo/
+drizzle/

@@ -16,6 +16,7 @@ import {
   Share2,
   Sun,
   Moon,
+  MessageSquare,
 } from "lucide-react"
 import type { Workspace } from "@/lib/api/types"
 
@@ -34,12 +35,13 @@ interface SidebarProps {
   workspaces: Workspace[]
   currentWorkspaceId: string | null
   onSelectWorkspace: (workspaceId: string) => void
+  onSession: () => void
   onGrowth: () => void
   onInsights: () => void
   onGraph: () => void
 }
 
-export function Sidebar({ className, workspaces, currentWorkspaceId, onSelectWorkspace, onGrowth, onInsights, onGraph }: SidebarProps) {
+export function Sidebar({ className, workspaces, currentWorkspaceId, onSelectWorkspace, onSession, onGrowth, onInsights, onGraph }: SidebarProps) {
   const { theme, setTheme } = useTheme()
 
   return (
@@ -63,6 +65,14 @@ export function Sidebar({ className, workspaces, currentWorkspaceId, onSelectWor
         <p className="px-2 pb-1 pt-4 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/25">
           Overview
         </p>
+        <button
+          onClick={onSession}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-left text-sm text-primary/80 transition-all hover:bg-primary/10 font-medium"
+          aria-label="Go to today's session"
+        >
+          <MessageSquare className="h-4 w-4 shrink-0 text-primary/60" aria-hidden="true" />
+          <span className="flex-1 truncate">Today's Session</span>
+        </button>
         <button
           onClick={onGrowth}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-left text-sm text-muted-foreground/60 transition-all hover:bg-accent hover:text-accent-foreground"

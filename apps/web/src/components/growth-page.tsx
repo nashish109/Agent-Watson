@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { Target } from "lucide-react"
 import { useGoals } from "@/hooks/use-goals"
 import { GoalCreateForm } from "./goal-create-form"
 import { GoalList } from "./goal-list"
+import { EmptyState } from "./ui/empty-state"
 
 export function GrowthPage() {
   const {
@@ -77,14 +79,23 @@ export function GrowthPage() {
         </div>
       )}
 
-      <GoalList
-        activeGoals={activeGoals}
-        completedGoals={completedGoals}
-        loading={loading}
-        onAddProgress={(goalId, note, progressDelta) => addProgress(goalId, note, progressDelta)}
-        onStatusChange={(goalId, status) => updateGoal(goalId, { status })}
-        onDelete={(goalId) => deleteGoal(goalId)}
-      />
+      {!loading && !error && activeGoals.length === 0 && completedGoals.length === 0 && !showCreateForm ? (
+        <EmptyState
+          icon={Target}
+          title="No goals yet"
+          description="Goals help you track progress on what matters. Create your first goal to get started."
+          action={{ label: "+ Create Goal", onClick: () => setShowCreateForm(true) }}
+        />
+      ) : (
+        <GoalList
+          activeGoals={activeGoals}
+          completedGoals={completedGoals}
+          loading={loading}
+          onAddProgress={(goalId, note, progressDelta) => addProgress(goalId, note, progressDelta)}
+          onStatusChange={(goalId, status) => updateGoal(goalId, { status })}
+          onDelete={(goalId) => deleteGoal(goalId)}
+        />
+      )}
     </div>
   )
 }

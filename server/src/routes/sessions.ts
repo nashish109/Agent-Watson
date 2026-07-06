@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
-import { insertSession } from "../db/db-service.js"
+import { insertSession, getSessionMessages } from "../db/db-service.js"
 
 interface SessionData {
   id: string
@@ -71,5 +71,15 @@ export async function sessionRoutes(app: FastifyInstance) {
       endedAt: session.endedAt,
       summary: session.summary,
     }
+  })
+
+  app.get<{ Params: { id: string } }>("/api/sessions/:id/messages", async (request) => {
+    const dbMessages = await getSessionMessages(request.params.id)
+    const messages = dbMessages.map((m: any) => ({
+      role: m.role,
+      content: m.content,
+      createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
+    }))
+    return { ok: true, messages }
   })
 }

@@ -3,6 +3,17 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
 
+const PROMPTS = [
+  "What happened today?",
+  "What's on your mind?",
+  "Share a thought or idea...",
+  "What did you learn today?",
+  "Anything you want to explore?",
+  "What's something new you tried?",
+  "What are you grateful for?",
+  "What challenged you today?",
+]
+
 interface ContributionInputProps {
   onSubmit: (content: string) => void
   onCancel?: () => void
@@ -10,11 +21,20 @@ interface ContributionInputProps {
 
 export function ContributionInput({ onSubmit, onCancel }: ContributionInputProps) {
   const [value, setValue] = useState("")
+  const [promptIndex, setPromptIndex] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     textareaRef.current?.focus()
   }, [])
+
+  useEffect(() => {
+    if (value) return
+    const interval = setInterval(() => {
+      setPromptIndex((i) => (i + 1) % PROMPTS.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [value])
 
   const handleSubmit = () => {
     const trimmed = value.trim()
@@ -60,11 +80,8 @@ export function ContributionInput({ onSubmit, onCancel }: ContributionInputProps
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           rows={4}
-          placeholder="What happened today?"
-          className={cn(
-            "w-full resize-none bg-transparent text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40",
-            "focus:outline-none",
-          )}
+          placeholder={PROMPTS[promptIndex]}
+          className="w-full resize-none bg-transparent text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
           aria-label="Your contribution"
         />
         <div className="mt-4 flex items-center justify-between">
