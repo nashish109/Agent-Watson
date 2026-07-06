@@ -12,7 +12,7 @@ import { getInsightsForMemories, formatInsightsForContext } from "../services/in
 import { findRelatedGoals, formatGoalsForContext } from "../services/goals.js"
 import { extractAndStoreConcepts, getRelatedConcepts, formatConceptsForContext } from "../services/concepts.js"
 import { insertSession, insertMessage, getSessionMessages } from "../db/db-service.js"
-import { getProfile, formatProfileForContext, extractProfileInfo, updateProfile } from "../services/profile.js"
+import { getProfile, formatProfileForContext, extractProfileInfo, updateProfile, detectNameFromMessage } from "../services/profile.js"
 
 interface SessionData {
   id: string
@@ -76,6 +76,11 @@ export async function chatRoutes(app: FastifyInstance) {
     const extractedConcepts = await extractAndStoreConcepts(body.message, body.sessionId, body.userId)
     const relatedConcepts = getRelatedConcepts(body.message)
     const conceptsContext = formatConceptsForContext(relatedConcepts)
+
+    const detectedName = detectNameFromMessage(body.message)
+    if (detectedName) {
+      updateProfile(body.userId, { name: detectedName, details: {} })
+    }
 
     const userProfile = getProfile(body.userId)
     const profileContext = formatProfileForContext(userProfile)

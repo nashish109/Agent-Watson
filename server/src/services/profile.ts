@@ -24,7 +24,9 @@ export function hydrateProfiles(data: Array<{ userId: string; name: string | nul
 }
 
 export function formatProfileForContext(profile: UserProfile | null): string {
-  if (!profile) return ""
+  if (!profile || (!profile.name && Object.keys(profile.details).length === 0)) {
+    return ""
+  }
   const parts: string[] = []
   if (profile.name) parts.push(`Name: ${profile.name}`)
   const detailKeys = Object.keys(profile.details)
@@ -33,7 +35,27 @@ export function formatProfileForContext(profile: UserProfile | null): string {
     if (val) parts.push(`${key}: ${val}`)
   }
   if (parts.length === 0) return ""
-  return `You know the following about the user:\n${parts.join("\n")}\n\nReference this naturally in your response.`
+  return `You know the following about the user:\n${parts.join("\n")}\n\nReference this naturally in your response. Do NOT use this information if it's empty or unset.`
+}
+
+const NAME_PATTERNS = [
+  /my name is (\w+)/i,
+  /call me (\w+)/i,
+  /i['‘’]m (\w+)/i,
+  /i am (\w+)/i,
+  /this is (\w+)/i,
+  /name['‘’]s (\w+)/i,
+]
+
+export function detectNameFromMessage(message: string): string | null {
+  for (const pattern of NAME_PATTERNS) {
+    const match = message.match(pattern)
+    if (match && match[1].length > 1) {
+      const name = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()
+      return name
+    }
+  }
+  return null
 }
 
 export async function extractProfileInfo(

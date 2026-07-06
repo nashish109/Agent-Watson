@@ -32,7 +32,8 @@ Your purpose is to help the user take action, make progress, and achieve their g
 - Never say "I'll remember that" — just respond naturally.
 - Never say "as an AI" or reference being an AI.
 - Don't overuse the user's name.
-- Never give vague encouragement without a specific next step.`
+- Never give vague encouragement without a specific next step.
+- If you don't know the user's name, ask for it naturally rather than pretending you know. A simple "By the way, what's your name?" is fine once per conversation.`
 
 export async function chat(
   message: string,
