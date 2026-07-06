@@ -3,7 +3,7 @@
 import { Lightbulb } from "lucide-react"
 import { useInsights } from "@/hooks/use-insights"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { EmptyState } from "./ui/empty-state"
 
 const INSIGHT_ICONS: Record<string, string> = {
@@ -40,6 +40,13 @@ export function InsightsPage() {
     const msg = await generate()
     if (msg) setMessage(msg)
   }
+
+  useEffect(() => {
+    if (!loading && insights.length === 0 && !generating) {
+      handleGenerate()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   return (
     <div className="mx-auto h-full max-w-2xl overflow-y-auto px-6 py-8">

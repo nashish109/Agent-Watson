@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import type { Goal } from "@/lib/api/types"
+import type { Goal, GoalProgressUpdate } from "@/lib/api/types"
+import { getGoalProgress } from "@/lib/api/api"
 
 interface GoalCardProps {
   goal: Goal
@@ -31,10 +32,23 @@ const CATEGORY_DOTS: Record<string, string> = {
 
 export function GoalCard({ goal, onAddProgress, onStatusChange, onDelete }: GoalCardProps) {
   const [showProgressInput, setShowProgressInput] = useState(false)
+  const [showLogs, setShowLogs] = useState(false)
+  const [logs, setLogs] = useState<GoalProgressUpdate[]>([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
   const [progressNote, setProgressNote] = useState("")
   const [progressAmount, setProgressAmount] = useState(10)
 
   const colorClass = CATEGORY_COLORS[goal.category] ?? CATEGORY_COLORS.generic
+
+  useEffect(() => {
+    if (showLogs && logs.length === 0 && !loadingLogs) {
+      setLoadingLogs(true)
+      getGoalProgress(goal.id).then((data) => {
+        setLogs(data)
+        setLoadingLogs(false)
+      }).catch(() => setLoadingLogs(false))
+    }
+  }, [showLogs, goal.id, logs.length, loadingLogs])
   const dotClass = CATEGORY_DOTS[goal.category] ?? CATEGORY_DOTS.generic
 
   const handleSubmitProgress = () => {
@@ -68,22 +82,31 @@ export function GoalCard({ goal, onAddProgress, onStatusChange, onDelete }: Goal
         </div>
 
         {isActive && (
-          <div className="flex shrink-0 gap-1">
+          <div className="flex shrink-0 gap-1 items-center">
             <button
-              onClick={() => setShowProgressInput(!showProgressInput)}
+              onClick={() => { setShowLogs(!showLogs); setShowProgressInput(false) }}
               className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-primary/70 transition-colors hover:bg-primary/10"
             >
               Log
             </button>
             <button
-              onClick={() => onStatusChange(goal.id, "completed")}
+              onClick={() => setShowProgressInput(!showProgressInput)}
               className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-emerald-400/60 transition-colors hover:bg-emerald-500/10"
             >
-              Done
+              + Add
+            </button>
+            <button
+              onClick={() => onStatusChange(goal.id, "completed")}
+              className="flex h-5 w-5 items-center justify-center rounded border border-emerald-400/40 text-emerald-400 transition-colors hover:bg-emerald-500/10"
+              title="Mark as completed"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
             </button>
             <button
               onClick={() => onDelete(goal.id)}
-              className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-rose-400/50 transition-colors hover:bg-rose-500/10"
+              className="rounded-lg px-2 py-1.5 text-[11px] font-medium text-rose-400/50 transition-colors hover:bg-rose-500/10"
             >
               X
             </button>
@@ -101,6 +124,28 @@ export function GoalCard({ goal, onAddProgress, onStatusChange, onDelete }: Goal
           style={{ width: `${goal.progress}%` }}
         />
       </div>
+
+      {/* Logs list */}
+      {showLogs && (
+        <div className="mt-3 animate-fade-in space-y-1.5 border-t border-border/20 pt-3">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/40">Progress Log</p>
+          {loadingLogs ? (
+            <p className="text-[11px] text-muted-foreground/30">Loading...</p>
+          ) : logs.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground/30">No logs yet</p>
+          ) : (
+            logs.map((log) => (
+              <div key={log.id} className="flex items-center gap-2 rounded-lg bg-card/50 px-2.5 py-1.5">
+                <span className="text-[10px] font-medium text-emerald-400/60">+{log.progressDelta}%</span>
+                <span className="text-[11px] text-muted-foreground/60">{log.note}</span>
+                <span className="ml-auto text-[10px] text-muted-foreground/30">
+                  {new Date(log.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Progress input */}
       {showProgressInput && isActive && (

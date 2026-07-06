@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import type { Session } from "@/data/memories"
 import type { Workspace } from "@/lib/api/types"
 import { ContributionInput } from "@/components/contribution-input"
@@ -45,9 +45,15 @@ export function DailyJourney({
     setShowInput(false)
   }
 
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [session?.items.length])
+
   if (!session) {
     return (
-      <LivingCanvas onActivate={() => setShowInput(true)}>
+      <LivingCanvas>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
           <p className="text-sm text-muted-foreground/40">Begin your session by sharing what happened today.</p>
           <button
@@ -87,6 +93,7 @@ export function DailyJourney({
           </div>
         ))}
       </div>
+      <div ref={bottomRef} />
       <div className="mt-6">
         <button
           onClick={() => setShowInput(true)}
