@@ -13,6 +13,8 @@ import { findRelatedGoals, formatGoalsForContext } from "../services/goals.js"
 import { extractAndStoreConcepts, getRelatedConcepts, formatConceptsForContext } from "../services/concepts.js"
 import { insertSession, insertMessage, getSessionMessages } from "../db/db-service.js"
 import { getProfile, formatProfileForContext, extractProfileInfo, updateProfile, detectNameFromMessage } from "../services/profile.js"
+import { planActions } from "../services/planner.js"
+import { executeAction, formatActionResult } from "../services/tools.js"
 
 interface SessionData {
   id: string
@@ -85,12 +87,32 @@ export async function chatRoutes(app: FastifyInstance) {
     const userProfile = getProfile(body.userId)
     const profileContext = formatProfileForContext(userProfile)
 
+    const plan = await planActions(body.message, {
+      goals: goalsContext,
+      memories: memoriesContext,
+      sessionId: body.sessionId,
+    })
+
+    let actionResultsContext = ""
+    if (plan.actions.length > 0) {
+      const results: string[] = []
+      for (const action of plan.actions) {
+        const result = await executeAction(action, {
+          userId: body.userId,
+          sessionId: body.sessionId,
+        })
+        results.push(formatActionResult(action, result))
+      }
+      actionResultsContext = results.join("\n")
+    }
+
     const reply = await chat(body.message, {
       memories: memoriesContext,
       sessionSummary,
       goals: goalsContext,
       concepts: conceptsContext,
       profile: profileContext,
+      actionResults: actionResultsContext || undefined,
     })
 
     session.messages.push({ role: "assistant", content: reply })
