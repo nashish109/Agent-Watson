@@ -12,6 +12,7 @@ import { getInsightsForMemories, formatInsightsForContext } from "../services/in
 import { findRelatedGoals, formatGoalsForContext } from "../services/goals.js"
 import { extractAndStoreConcepts, getRelatedConcepts, formatConceptsForContext } from "../services/concepts.js"
 import { insertSession, insertMessage, getSessionMessages } from "../db/db-service.js"
+import { getProfile, formatProfileForContext, extractProfileInfo, updateProfile } from "../services/profile.js"
 
 interface SessionData {
   id: string
@@ -76,11 +77,15 @@ export async function chatRoutes(app: FastifyInstance) {
     const relatedConcepts = getRelatedConcepts(body.message)
     const conceptsContext = formatConceptsForContext(relatedConcepts)
 
+    const userProfile = getProfile(body.userId)
+    const profileContext = formatProfileForContext(userProfile)
+
     const reply = await chat(body.message, {
       memories: memoriesContext,
       sessionSummary,
       goals: goalsContext,
       concepts: conceptsContext,
+      profile: profileContext,
     })
 
     session.messages.push({ role: "assistant", content: reply })
@@ -99,6 +104,12 @@ export async function chatRoutes(app: FastifyInstance) {
       body.message,
       reply,
     )
+
+    extractProfileInfo(body.message, reply).then((info) => {
+      if (info.name || Object.keys(info.details).length > 0) {
+        updateProfile(body.userId, info)
+      }
+    })
 
     const relatedInsights = getInsightsForMemories([storedMemory.id])
 

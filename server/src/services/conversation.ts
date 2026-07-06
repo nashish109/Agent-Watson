@@ -38,6 +38,7 @@ export async function chat(
     sessionSummary?: string
     goals?: string
     concepts?: string
+    profile?: string
   },
 ): Promise<string> {
   const provider = getAIProvider()
@@ -45,6 +46,13 @@ export async function chat(
   const messages: AIMessage[] = [
     { role: "system", content: SYSTEM_PROMPT },
   ]
+
+  if (context?.profile) {
+    messages.push({
+      role: "system",
+      content: context.profile,
+    })
+  }
 
   if (context?.memories) {
     messages.push({

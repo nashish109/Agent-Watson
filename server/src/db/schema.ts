@@ -127,6 +127,13 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
+export const userProfiles = pgTable("user_profiles", {
+  userId: text("user_id").primaryKey().references(() => users.id),
+  name: text("name"),
+  details: jsonb("details").default({}),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
 export const goals = pgTable("goals", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id),

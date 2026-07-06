@@ -8,6 +8,7 @@ import { hydrateConcepts, hydrateEdges } from "./concepts.js"
 import { hydrateInsights } from "./insights.js"
 import { hydrateSessions, getAllSessions } from "../routes/sessions.js"
 import { hydrateSessionMessages } from "../routes/chat.js"
+import { hydrateProfiles } from "./profile.js"
 import * as schema from "../db/schema.js"
 
 function parseEmbedding(v: unknown): number[] {
@@ -132,6 +133,17 @@ export async function hydrateFromDb(): Promise<void> {
           role: m.role,
           content: m.content,
           createdAt: toIso(m.createdAt),
+        })),
+      )
+    }
+
+    const dbProfiles = await getDb().select().from(schema.userProfiles)
+    if (dbProfiles.length > 0) {
+      hydrateProfiles(
+        dbProfiles.map((p: any) => ({
+          userId: p.userId,
+          name: p.name,
+          details: p.details,
         })),
       )
     }

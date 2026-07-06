@@ -1,7 +1,7 @@
 import { getDb } from "./index.js"
 import { config } from "../config.js"
 import * as schema from "./schema.js"
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, desc, sql } from "drizzle-orm"
 
 const DB_ENABLED = Boolean(config.database.url)
 
@@ -37,6 +37,19 @@ export async function getSessionMessages(sessionId: string): Promise<any[]> {
     .from(schema.messages)
     .where(eq(schema.messages.sessionId, sessionId))
     .orderBy(schema.messages.createdAt)
+}
+
+// ── User Profile ──────────────────────────────────────────────────
+export async function getUserProfile(userId: string): Promise<any> {
+  if (!DB_ENABLED) return null
+  const rows = await getDb().select().from(schema.userProfiles).where(eq(schema.userProfiles.userId, userId)).limit(1)
+  return rows[0] ?? null
+}
+
+export async function upsertUserProfile(data: { userId: string; name?: string; details?: any }): Promise<void> {
+  if (!DB_ENABLED) return
+  await getDb().insert(schema.userProfiles).values({ ...data, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: schema.userProfiles.userId, set: { ...data, updatedAt: new Date() } })
 }
 
 // ── Memory ────────────────────────────────────────────────────────
